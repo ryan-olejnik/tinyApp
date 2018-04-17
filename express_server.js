@@ -9,8 +9,8 @@ var urlDatabase = {
 };
 
 app.get("/", (request, response) => {
-  response.write("Hello! This is the homepage!");
-  response.end();
+  // console.log('this is the sauce', request);
+  response.render('home_page.ejs');
 });
 
 app.get('/urls', function(request, response){
@@ -18,14 +18,11 @@ app.get('/urls', function(request, response){
   response.render('urls_index', templateVariables);
 });
 
-// app.get('/urls.json', (req, res) => {
-//   res.json(urlDatabase);
+app.get('/urls/:id', function(request, response){
+  let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id]};
+  response.render('urls_show.ejs', templateVariables);
+});
 
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.end('<html><body>Hello <b>World</b></body></html>\n');
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
