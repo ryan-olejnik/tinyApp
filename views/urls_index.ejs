@@ -4,6 +4,8 @@
   <title>TinyApp</title>
 </head>
 <body>
+    <%- include('partials/_header.ejs') %>
+    <h2>List of all the urls in url Database</h2>
     <% for (let key in urls){ %>
     <h2>For the Website: <%=urls[key]%></h2>
     <p>We can use the shortened url: <%=key %></p>
