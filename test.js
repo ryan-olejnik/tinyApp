@@ -1,17 +1,10 @@
-var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-
-var templateVariables = {urls: urlDatabase};
-
-function callback(x) {
-  console.log(x);
+function generateRandomString(){
+  // Generate a random string of 6 characters:
+  var randomKey = '';
+  for (let i = 0; i < 6; i++){
+    randomKey += Math.floor(Math.random()*10);
+  }
+  return randomKey;
 }
 
-
-
-for (let key in templateVariables.urls){
-  console.log(`${key} = ${templateVariables.urls[key]}`);
-}
+console.log(generateRandomString());

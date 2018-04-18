@@ -45,3 +45,12 @@ app.get('/urls/:id', function(request, response){
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+function generateRandomString(){
+  // Generate a random string of 6 characters:
+  var randomKey = '';
+  for (let i = 0; i < 6; i++){
+    randomKey += Math.floor(Math.random()*10);
+  }
+}
