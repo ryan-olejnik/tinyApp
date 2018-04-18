@@ -1,10 +1,9 @@
-function generateRandomString(){
-  // Generate a random string of 6 characters:
-  var randomKey = '';
-  for (let i = 0; i < 6; i++){
-    randomKey += Math.floor(Math.random()*10);
-  }
-  return randomKey;
-}
+var urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
 
-console.log(generateRandomString());
+
+if (urlDatabase['b2xVn2']){
+  console.log('b2xVn2 is in database!');
+}

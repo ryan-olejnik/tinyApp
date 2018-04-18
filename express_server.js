@@ -21,9 +21,12 @@ app.get('/urls/new', function (request, response){
   response.render('urls_new.ejs');
 });
 
+// Handle the response from the form:
 app.post('/urls', (request, response) => {
-  console.log('request.body =\n', request.body);
-  response.end('THANKS for the url!!');
+  let newShortUrl = generateRandomString();
+  urlDatabase[newShortUrl] = request.body.longURL;
+  console.log(urlDatabase);
+  response.redirect('/urls/' + newShortUrl);
 });
 
 
@@ -38,8 +41,32 @@ app.get('/urls', function(request, response){
 // SINGLE URL 
 app.get('/urls/:id', function(request, response){
   let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id]};
-  response.render('urls_show.ejs', templateVariables);
+  
+  if (urlDatabase[templateVariables.shortURL]){
+    console.log(`${templateVariables.shortURL} is in the dataase!`);
+    response.render('urls_show.ejs', templateVariables);
+  } else {
+    response.end('WRONG SHORTENED URL!!!!');
+  }
+
 });
+
+// Redirect to the original website using the short url:
+app.get('/u/:shortURL', function(request, response){
+  let longURL = urlDatabase[request.params.shortURL];
+  
+  // check if shortURL is in database:
+  if (urlDatabase[request.params.shortURL]){
+    if (longURL.slice(0,4) == 'http'){
+    response.redirect(longURL);
+    } else {
+    response.redirect('https://' + longURL);
+    }
+  } else{
+    response.end('WRONG SHORTENED URL!!!');
+  }
+});
+
 
 
 app.listen(PORT, () => {
@@ -53,4 +80,5 @@ function generateRandomString(){
   for (let i = 0; i < 6; i++){
     randomKey += Math.floor(Math.random()*10);
   }
+  return randomKey;
 }
