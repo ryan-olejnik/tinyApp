@@ -4,6 +4,9 @@ var urlDatabase = {
 };
 
 
-if (urlDatabase['b2xVn2']){
-  console.log('b2xVn2 is in database!');
-}
+console.log(urlDatabase);
+
+delete urlDatabase["b2xVn2"];
+
+
+console.log(urlDatabase);

@@ -6,9 +6,12 @@
 <body>
     <%- include('partials/_header.ejs') %>
     <h2>List of all the urls in url Database</h2>
-    <% for (let key in urls){ %>
-    <h2>For the Website: <%=urls[key]%></h2>
-    <p>We can use the shortened url: <%=key %></p>
+    <% for (let shortURL in urls){ %>
+    <h2>For the Website: <%=urls[shortURL]%></h2>
+    <p>We can use the shortened url: <%=shortURL %></p>
+    <form method="POST" action="/urls/<%= shortURL %>/delete"  >
+      <input type="submit" value="DELETE THIS ITEM">
+    </form>
     <% } %>
 
 

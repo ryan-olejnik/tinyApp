@@ -1,6 +1,6 @@
 const app = require('express')();
 var PORT = process.env.PORT || 8080; // default port 8080
-const bodyParser = require("body-parser");
+const bodyParser = require("body-parser"); // Allows us to handle 'POST' requests
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
@@ -21,15 +21,13 @@ app.get('/urls/new', function (request, response){
   response.render('urls_new.ejs');
 });
 
-// Handle the response from the form:
+// Handle the POST request from the form:
 app.post('/urls', (request, response) => {
   let newShortUrl = generateRandomString();
   urlDatabase[newShortUrl] = request.body.longURL;
   console.log(urlDatabase);
   response.redirect('/urls/' + newShortUrl);
 });
-
-
 
 // LIST OF ALL URLS
 app.get('/urls', function(request, response){
@@ -38,7 +36,7 @@ app.get('/urls', function(request, response){
 });
 
 
-// SINGLE URL 
+// SHOW SINGLE URL 
 app.get('/urls/:id', function(request, response){
   let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id]};
   
@@ -48,7 +46,6 @@ app.get('/urls/:id', function(request, response){
   } else {
     response.end('WRONG SHORTENED URL!!!!');
   }
-
 });
 
 // Redirect to the original website using the short url:
@@ -65,6 +62,15 @@ app.get('/u/:shortURL', function(request, response){
   } else{
     response.end('WRONG SHORTENED URL!!!');
   }
+});
+
+// Handle the 'DELETE URL' request:
+app.post('/urls/:id/delete', function(request, response){
+  // console.log(`User wants to delete: ${request.params.id}`);
+  let shortUrlToDelete = request.params.id;
+  response.end(`Deleted ${shortUrlToDelete}:${urlDatabase[shortUrlToDelete]} from the Database!`);
+  delete urlDatabase[shortUrlToDelete];
+
 });
 
 
