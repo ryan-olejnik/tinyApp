@@ -24,7 +24,9 @@ app.get("/", (request, response) => {
 
 // NEW URL FORM PAGE:
 app.get('/urls/new', function (request, response){
-  response.render('urls_new.ejs');
+  // add in temp variables:
+  let templateVariables = {username: request.cookies.username};
+  response.render('urls_new.ejs', templateVariables);
 });
 
 // Handle the POST request from the form:
