@@ -5,7 +5,12 @@
 </head>
 <body>
     <%- include('partials/_header.ejs') %>
-    <h><%= longURL %></h>
-    <p>Shortened Form: <%= shortURL %></p>
+    <p>Shortened URL: <%= shortURL %></p>
+    <form method='POST' action = '/urls/<%= shortURL %>'>
+      <input type='text' name='longURL' value='<%= longURL%>'>
+      <input type='submit' value='Update!'>
+    </form>
 </body>
 </html>
+
+

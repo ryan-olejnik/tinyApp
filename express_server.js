@@ -41,7 +41,7 @@ app.get('/urls/:id', function(request, response){
   let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id]};
   
   if (urlDatabase[templateVariables.shortURL]){
-    console.log(`${templateVariables.shortURL} is in the dataase!`);
+    // console.log(`${templateVariables.shortURL} is in the dataase!`);
     response.render('urls_show.ejs', templateVariables);
   } else {
     response.end('WRONG SHORTENED URL!!!!');
@@ -68,10 +68,18 @@ app.get('/u/:shortURL', function(request, response){
 app.post('/urls/:id/delete', function(request, response){
   // console.log(`User wants to delete: ${request.params.id}`);
   let shortUrlToDelete = request.params.id;
-  response.end(`Deleted ${shortUrlToDelete}:${urlDatabase[shortUrlToDelete]} from the Database!`);
   delete urlDatabase[shortUrlToDelete];
-
+  response.redirect('/urls');
 });
+
+// Handle the 'UPDATE URL' rquest:
+app.post('/urls/:shortURL', function(request, response){
+  let urlToUpdate = request.params.shortURL;
+  let newLongUrl = request.body.longURL;
+  urlDatabase[urlToUpdate] = newLongUrl;
+  response.redirect('/urls');
+});
+
 
 
 
