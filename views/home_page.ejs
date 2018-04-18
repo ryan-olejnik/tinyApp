@@ -4,10 +4,14 @@
   <title>Tiny App - This is the window title!</title>
 </head>
 <body>
-   <h1>Welcome to Tiny App!</h1>
-   <h2>This is the homepage!</h2>
-   <p>If you would like to see a full length URL, enter the shortened URL into the address bar as shown below:</p>
-   <p>http://localhost:8080/SHORTENED_URL</p>
+  <h1>Welcome to Tiny App!</h1>
+  <%- include('partials/_header') %>
+  <h2>This is the homepage!</h2>
+  <p>If you would like to see a full length URL, enter the shortened URL into the address bar as shown below:</p>
+  <p>http://localhost:8080/SHORTENED_URL</p>
+  <form method='GET' action='/urls'>
+  <input type='submit' value='Enter the Site!'>
+  </form>
 </body>
 </html>
 

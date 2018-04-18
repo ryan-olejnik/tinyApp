@@ -1,9 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>TinyApp</title>
-</head>
-<body>
+  <head>
+    <title>TinyApp</title>
+  </head>
+  <body>
     <h2>Tiny App</h2>
-</body>
+    <% if (username) { %>
+    <p>You are logged in as: <%= username %></p>
+    <form method='POST' action='/logout'>
+      <input type='submit' value='Logout'>
+    </form>
+    <%  } else { %>
+    <form method='POST' action='/login'>
+      <input type='text' placeholder='enter login...' name='username'>
+      <input type='submit' value='Login!'>
+    </form>
+    <% } %>
+  </body>
 </html>
+
+
