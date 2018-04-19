@@ -5,18 +5,15 @@
   </head>
   <body>
     <h2>Tiny App</h2>
-    <% if (email) { %>
+    <% if (isLoggedIn) { %>
     <p>You are logged in as: <%= email %></p>
     <form method='POST' action='/logout'>
       <input type='submit' value='Logout'>
     </form>
     <%  } else { %>
-    <form method='POST' action='/login'>
-      <h4>Please Login...</h4>
-      <input type='text' placeholder='email...' name='email'>
-      <input type='text' placeholder='password...' name='password'>
-      <input type='submit' value='Login!'>
-    </form>
+      <form method='GET' action='/login'>
+        <input type='submit' value='Login'>
+      </form>
     <% } %>
 
     <form method='GET' action='/register'>

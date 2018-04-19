@@ -1,8 +1,9 @@
 const app = require('express')();
 var PORT = process.env.PORT || 8080; // default port 8080
-const bodyParser = require("body-parser"); // Allows us to handle 'POST' requests
+const bodyParser = require("body-parser"); // Allows us to handle 'POST' reqs
 const cookieParser = require('cookie-parser');
 var generateRandomString = require('./generateRandomString.js');
+const checkUser = require('./checkUser.js');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -15,133 +16,135 @@ var urlDatabase = {
 
 var userDatabase = {};
 
-// HOMEPAGE
-app.get("/", (request, response) => {
-  let templateVariables = {email: request.cookies.email};
-  response.render('home_page.ejs', templateVariables);
+//-----------GET HANDLERS--------------------------------------------------------------------------------------
+
+// Homepage
+app.get("/", (req, res) => {
+  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
+  res.render('home_page.ejs', templateVariables);
 });
 
-// NEW URL FORM PAGE:
-app.get('/urls/new', function (request, response){
-  // add in temp variables:
-  let templateVariables = {email: request.cookies.email};
-  response.render('urls_new.ejs', templateVariables);
+// List if all urls in database ------------->
+app.get('/urls', function(req, res){
+  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  let templateVariables = {urls: urlDatabase, email: req.cookies.email, isLoggedIn: isLoggedIn};
+  res.render('urls_index', templateVariables);
 });
 
-// Handle the POST request from the form:
-app.post('/urls', (request, response) => {
-  let newShortUrl = generateRandomString();
-  urlDatabase[newShortUrl] = request.body.longURL;
-  // console.log(urlDatabase);
-  response.redirect('/urls/' + newShortUrl);
+// New url page
+app.get('/urls/new', function (req, res){
+  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
+  res.render('urls_new.ejs', templateVariables);
 });
 
-// LIST OF ALL URLS
-app.get('/urls', function(request, response){
-  let templateVariables = {urls: urlDatabase, email: request.cookies.email};
-  response.render('urls_index', templateVariables);
+// Registration page:};
+app.get('/register', function(req, res){
+  res.render('register.ejs');
 });
 
-
-// SHOW SINGLE URL 
-app.get('/urls/:id', function(request, response){
-  let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id], email: request.cookies.email};
-  
+// Single URL page (with option to update longURL)
+app.get('/urls/:id', function(req, res){
+  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  let templateVariables = {'shortURL': req.params.id, 'longURL': urlDatabase[req.params.id], email: req.cookies.email, isLoggedIn: isLoggedIn};
   if (urlDatabase[templateVariables.shortURL]){
-    // console.log(`${templateVariables.shortURL} is in the dataase!`);
-    response.render('urls_show.ejs', templateVariables);
   } else {
-    response.end('WRONG SHORTENED URL!!!!');
+    res.end('WRONG SHORTENED URL!!!!');
   }
 });
 
-// Redirect to the original website using the short url:
-app.get('/u/:shortURL', function(request, response){
-  let longURL = urlDatabase[request.params.shortURL];
-  
+app.get('/login', function(req, res){
+  let templateVariables = {};
+  res.render('login.ejs', templateVariables)
+});
+
+
+// Redirect to longURL original website
+app.get('/u/:shortURL', function(req, res){
+  let longURL = urlDatabase[req.params.shortURL];
   // check if shortURL is in database:
-  if (urlDatabase[request.params.shortURL]){
+  if (urlDatabase[req.params.shortURL]){
+    // Add 'https://' to the longURL if it was omitted by the user:
     if (longURL.slice(0,4) == 'http'){
-    response.redirect(longURL);
+    res.redirect(longURL);
     } else {
-    response.redirect('https://' + longURL);
+    res.redirect('https://' + longURL);
     }
   } else{
-    response.end('WRONG SHORTENED URL!!!');
+    res.end('WRONG SHORTENED URL!!!');
   }
 });
 
-// Handle the 'DELETE URL' request:
-app.post('/urls/:id/delete', function(request, response){
-  // console.log(`User wants to delete: ${request.params.id}`);
-  let shortUrlToDelete = request.params.id;
-  delete urlDatabase[shortUrlToDelete];
-  response.redirect('/urls');
+
+
+// ----------POST HANDLERS---------------------------------------------------------------------------------------
+
+// POST from new url page:
+app.post('/urls/new', (req, res) => {
+  let newShortUrl = generateRandomString();
+  urlDatabase[newShortUrl] = req.body.longURL;
+  res.redirect('/urls');
 });
 
-// Handle the 'UPDATE URL' rquest:
-app.post('/urls/:shortURL', function(request, response){
-  let urlToUpdate = request.params.shortURL;
-  let newLongUrl = request.body.longURL;
+// Handle the 'UPDATE URL' rquest from the Single URL page
+app.post('/urls/:shortURL', function(req, res){
+  let urlToUpdate = req.params.shortURL;
+  let newLongUrl = req.body.longURL;
   urlDatabase[urlToUpdate] = newLongUrl;
-  response.redirect('/urls');
+  res.redirect('/urls');
+});
+
+// Handle the 'DELETE URL' req:
+app.post('/urls/:id/delete', function(req, res){
+  let shortUrlToDelete = req.params.id;
+  delete urlDatabase[shortUrlToDelete];
+  res.redirect('/urls');
 });
 
 // Handle Login:
-app.post('/login', function(request, response){
-  response.cookie('email', request.body.email);
+app.post('/login', function(req, res){
   // DETERMINE IF THE LOGIN/PASSWORD MATCH ANYTHING IN THE DATABASE: 
-  var input_email = request.body.email;
-  var input_password = request.body.password;
-
-  // determine if user1 is in the database:
-  var isUserMatch = false;
-  var isPassMatch = false;
-
-  for (let user in userDatabase){
-    if (userDatabase[user].email == input_email && userDatabase[user].password == input_password) {
-      isUserMatch = true;
-      isPassMatch = true;
-    }
-    else if (userDatabase[user].email == input_email && userDatabase[user].password !== input_password){
-      isUserMatch = true;
-    }
-  }
-
-  if (isUserMatch === true && isPassMatch === true){
-    response.redirect('/urls');
-  } else if (isUserMatch === true && isPassMatch === false){
-    response.end('Incorrect Password!!');
-  } else {
-    response.end('Incorrect email!!!');
+  if (checkUser(req.body.email, req.body.password, userDatabase).isValid){
+    res.cookie('email', req.body.email);
+    res.cookie('password', req.body.password);
+    res.redirect('/urls');
+  } else{
+    res.end(checkUser(req.body.email, req.body.password, userDatabase).errorStatus);
   }
 });
 
 // Handle Logout:
-app.post('/logout', function(request,response){
+app.post('/logout', function(req,res){
   // delete cookie
-  response.clearCookie('email');
-  response.redirect('/');
+  res.clearCookie('email');
+  res.clearCookie('password');
+  res.redirect('/');
 });
 
-// Registration page:
-app.get('/register', function(request, response){
-  response.render('register.ejs');
-});
 
-// Handle response from registration:
-app.post('/register', function(request, response){
+// Handle POST from registration:
+app.post('/register', function(req, res){
   var newUserID = `user${Object.keys(userDatabase).length+1}`;
-  userDatabase[newUserID] = {email: request.body.email, password: request.body.password};
-  console.log(userDatabase);
-  let templateVariables = {email: request.cookies.email};
-  response.render('home_page.ejs', templateVariables);
+  if (req.body.email === ''){
+    res.status(400).send('Invalid username');
+    res.end();
+  } else if(req.body.password === ''){
+    res.status(400).send('Invalid password');
+    res.end();
+  }
+
+
+
+  userDatabase[newUserID] = {email: req.body.email, password: req.body.password};
+  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
+  res.render('home_page.ejs', templateVariables);
 });
 
 
-
+// Fire up the server!
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);
 });
-
 

@@ -9,7 +9,7 @@
     <% for (let shortURL in urls){ %>
     <h3>For the Website: <%=urls[shortURL]%></h3>
     <p>We can use the shortened url: <%=shortURL %></p>
-    <form method="POST" action="/urls/<%= shortURL %>/delete"  >
+    <form method="POST" action="/urls/<%= shortURL %>/delete">
       <input type="submit" value="DELETE THIS ITEM">
     </form>
 
@@ -22,6 +22,11 @@
     </form>
 
     <% } %>
+
+    <h1>   </h1>
+    <form method='GET' action='/urls/new'>
+      <input type='submit' value='Add New'>
+    </form>
 
 
 </body>

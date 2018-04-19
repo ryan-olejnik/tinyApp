@@ -1,37 +1,28 @@
-var userDatabase = {
-  user_1: { email: 'ryan@gmail.com', password: 'password' },
-  user_2: { email: 'ryano', password: 'ryan1234' } 
+/*
+
+
+- server logs in with incorrect email even as long as cookie is present (but user is not in database)
+
+
+
+
+*/
+
+const checkUser = require('./checkUser.js');
+
+
+
+const userDatabase = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "ryan@example.com", 
+    password: "pass"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
 };
 
-// user1
-var input_email = 'ryan@gmail.com';
-var input_password = 'password';
-
-
-console.log(Object.keys(userDatabase).length)
-
-// determine if user1 is in the database:
-var isUserMatch = false;
-var isPassMatch = false;
-
-
-
-for (let user in userDatabase){
-  if (userDatabase[user].email == input_email && userDatabase[user].password == input_password) {
-    isUserMatch = true;
-    isPassMatch = true;
-  }
-  else if (userDatabase[user].email == input_email && userDatabase[user].password !== input_password){
-    isUserMatch = true;
-  }
-}
-
-if (isUserMatch === true && isPassMatch === true){
-  console.log('You are a member!');
-} else if (isUserMatch === true && isPassMatch === false){
-  console.log('Incorrect Password!!');
-} else {
-  console.log('Incorrect Username :(:::');
-}
-
-
+console.log(checkUser('ryan@example.com', 'pass', userDatabase).isValid);
