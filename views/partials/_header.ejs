@@ -5,7 +5,7 @@
   </head>
   <body>
     <h2>Tiny App</h2>
-    <% if (isLoggedIn) { %>
+    <% if (userID) { %>
     <p>You are logged in as: <%= email %></p>
     <form method='POST' action='/logout'>
       <input type='submit' value='Logout'>

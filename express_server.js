@@ -3,68 +3,66 @@ var PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser"); // Allows us to handle 'POST' reqs
 const cookieParser = require('cookie-parser');
 var generateRandomString = require('./generateRandomString.js');
-const checkUser = require('./checkUser.js');
+const checkUserLogin = require('./checkUserLogin.js');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 
-var urlDatabase = {
+var defaultUrlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
 var userDatabase = {};
+// userDatabase format: user13434: {email: ryan@gmail.com, password: pass123, urlDatabase: {}}
 
 //-----------GET HANDLERS--------------------------------------------------------------------------------------
 
 // Homepage
 app.get("/", (req, res) => {
-  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
-  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
-  res.render('home_page.ejs', templateVariables);
+  res.render('home_page.ejs');
 });
 
-// List if all urls in database ------------->
+// List all urls in user's database 
 app.get('/urls', function(req, res){
-  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
-  let templateVariables = {urls: urlDatabase, email: req.cookies.email, isLoggedIn: isLoggedIn};
-  res.render('urls_index', templateVariables);
+  let userInfo = userDatabase[req.cookies.userID];
+  res.render('urls_index', userInfo);
 });
 
 // New url page
 app.get('/urls/new', function (req, res){
-  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
-  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
-  res.render('urls_new.ejs', templateVariables);
+  let userInfo = userDatabase[req.cookies.userID];
+  res.render('urls_new.ejs', userInfo);
 });
 
-// Registration page:};
+// Registration page:
 app.get('/register', function(req, res){
   res.render('register.ejs');
 });
 
 // Single URL page (with option to update longURL)
-app.get('/urls/:id', function(req, res){
-  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
-  let templateVariables = {'shortURL': req.params.id, 'longURL': urlDatabase[req.params.id], email: req.cookies.email, isLoggedIn: isLoggedIn};
-  if (urlDatabase[templateVariables.shortURL]){
+app.get('/urls/:shortURL', function(req, res){
+  let userInfo = userDatabase[req.cookies.userID];
+
+  if (userInfo.urlDatabase[req.params.shortURL]){
   } else {
     res.end('WRONG SHORTENED URL!!!!');
   }
 });
 
 app.get('/login', function(req, res){
-  let templateVariables = {};
-  res.render('login.ejs', templateVariables)
+  let userInfo = userDatabase[req.cookies.userID];
+  res.render('login.ejs', userInfo);
 });
 
 
 // Redirect to longURL original website
 app.get('/u/:shortURL', function(req, res){
-  let longURL = urlDatabase[req.params.shortURL];
+  let userInfo = userDatabase[req.cookies.userID];
+  let longURL = userInfo.urlDatabase[req.params.shortURL];
   // check if shortURL is in database:
-  if (urlDatabase[req.params.shortURL]){
+  if (userInfo.urlDatabase[req.params.shortURL]){
     // Add 'https://' to the longURL if it was omitted by the user:
     if (longURL.slice(0,4) == 'http'){
     res.redirect(longURL);
@@ -82,8 +80,9 @@ app.get('/u/:shortURL', function(req, res){
 
 // POST from new url page:
 app.post('/urls/new', (req, res) => {
+  let userInfo = userDatabase[req.cookies.userID];
   let newShortUrl = generateRandomString();
-  urlDatabase[newShortUrl] = req.body.longURL;
+  userInfo.urlDatabase[newShortUrl] = req.body.longURL;
   res.redirect('/urls');
 });
 
@@ -97,35 +96,36 @@ app.post('/urls/:shortURL', function(req, res){
 
 // Handle the 'DELETE URL' req:
 app.post('/urls/:id/delete', function(req, res){
+  let userInfo = userDatabase[req.cookies.userID];
   let shortUrlToDelete = req.params.id;
-  delete urlDatabase[shortUrlToDelete];
+  delete userDatabase[req.cookies.userID].urlDatabase[shortUrlToDelete];
   res.redirect('/urls');
 });
 
 // Handle Login:
 app.post('/login', function(req, res){
   // DETERMINE IF THE LOGIN/PASSWORD MATCH ANYTHING IN THE DATABASE: 
-  if (checkUser(req.body.email, req.body.password, userDatabase).isValid){
-    res.cookie('email', req.body.email);
-    res.cookie('password', req.body.password);
+  if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
+    res.cookie('userID', checkUserLogin(req.body.email, req.body.password, userDatabase));
+    console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
     res.redirect('/urls');
   } else{
-    res.end(checkUser(req.body.email, req.body.password, userDatabase).errorStatus);
+    res.status(403);
+    res.end('Incorrect email/password!');
   }
 });
 
 // Handle Logout:
 app.post('/logout', function(req,res){
   // delete cookie
-  res.clearCookie('email');
-  res.clearCookie('password');
+  res.clearCookie('userID');
   res.redirect('/');
 });
 
-
 // Handle POST from registration:
 app.post('/register', function(req, res){
-  var newUserID = `user${Object.keys(userDatabase).length+1}`;
+  var newUserID = `user${Object.keys(userDatabase).length+1}${generateRandomString()}`;
+
   if (req.body.email === ''){
     res.status(400).send('Invalid username');
     res.end();
@@ -134,11 +134,11 @@ app.post('/register', function(req, res){
     res.end();
   }
 
-
-
-  userDatabase[newUserID] = {email: req.body.email, password: req.body.password};
-  let isLoggedIn = checkUser(req.cookies.email, req.cookies.password, userDatabase).isValid;
+  userDatabase[newUserID] = {email: req.body.email, password: req.body.password,
+  urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
+  let isLoggedIn = checkUserLogin(req.cookies.email, req.cookies.password, userDatabase).isValid;
   let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
+  console.log('new user added to userDatabase:', userDatabase);
   res.render('home_page.ejs', templateVariables);
 });
 

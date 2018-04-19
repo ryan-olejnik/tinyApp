@@ -1,28 +1,38 @@
-/*
+var defaultUrlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
 
 
-- server logs in with incorrect email even as long as cookie is present (but user is not in database)
-
-
-
-
-*/
-
-const checkUser = require('./checkUser.js');
+const checkUserLogin = require('./checkUserLogin.js');
 
 
 
 const userDatabase = { 
-  "userRandomID": {
-    id: "userRandomID", 
+  "user234324": {
+    userID: "user234324",
     email: "ryan@example.com", 
-    password: "pass"
+    password: "pass",
+    urlDatabase: defaultUrlDatabase
+
   },
- "user2RandomID": {
-    id: "user2RandomID", 
+ "user2323432": {
+    userID: "user2323432",
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "dishwasher-funk",
+    urlDatabase: defaultUrlDatabase
   }
 };
 
-console.log(checkUser('ryan@example.com', 'pass', userDatabase).isValid);
+var userID = checkUserLogin('ryan@example.com', 'pass', userDatabase);
+console.log(userDatabase[userID]);
+
+/*
+   { email: 'myemail',
+     password: 'pass',
+     urlDatabase: 
+      { b2xVn2: 'http://www.lighthouselabs.ca',
+        '9sm5xK': 'http://www.google.com' },
+     userID: 'user1367563' }
+
+*/
