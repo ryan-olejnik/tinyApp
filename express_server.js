@@ -8,24 +8,23 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 
-
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-var userDatabase = [];
+var userDatabase = {};
 
 // HOMEPAGE
 app.get("/", (request, response) => {
-  let templateVariables = {username: request.cookies.username};
+  let templateVariables = {email: request.cookies.email};
   response.render('home_page.ejs', templateVariables);
 });
 
 // NEW URL FORM PAGE:
 app.get('/urls/new', function (request, response){
   // add in temp variables:
-  let templateVariables = {username: request.cookies.username};
+  let templateVariables = {email: request.cookies.email};
   response.render('urls_new.ejs', templateVariables);
 });
 
@@ -39,14 +38,14 @@ app.post('/urls', (request, response) => {
 
 // LIST OF ALL URLS
 app.get('/urls', function(request, response){
-  let templateVariables = {urls: urlDatabase, username: request.cookies.username};
+  let templateVariables = {urls: urlDatabase, email: request.cookies.email};
   response.render('urls_index', templateVariables);
 });
 
 
 // SHOW SINGLE URL 
 app.get('/urls/:id', function(request, response){
-  let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id], username: request.cookies.username};
+  let templateVariables = {'shortURL': request.params.id, 'longURL': urlDatabase[request.params.id], email: request.cookies.email};
   
   if (urlDatabase[templateVariables.shortURL]){
     // console.log(`${templateVariables.shortURL} is in the dataase!`);
@@ -90,17 +89,53 @@ app.post('/urls/:shortURL', function(request, response){
 
 // Handle Login:
 app.post('/login', function(request, response){
-  // console.log(request.body);
-  userDatabase.push(request.body.username);
-  response.cookie('username', request.body.username);
-  response.redirect('/urls');
+  response.cookie('email', request.body.email);
+  // DETERMINE IF THE LOGIN/PASSWORD MATCH ANYTHING IN THE DATABASE: 
+  var input_email = request.body.email;
+  var input_password = request.body.password;
+
+  // determine if user1 is in the database:
+  var isUserMatch = false;
+  var isPassMatch = false;
+
+  for (let user in userDatabase){
+    if (userDatabase[user].email == input_email && userDatabase[user].password == input_password) {
+      isUserMatch = true;
+      isPassMatch = true;
+    }
+    else if (userDatabase[user].email == input_email && userDatabase[user].password !== input_password){
+      isUserMatch = true;
+    }
+  }
+
+  if (isUserMatch === true && isPassMatch === true){
+    response.redirect('/urls');
+  } else if (isUserMatch === true && isPassMatch === false){
+    response.end('Incorrect Password!!');
+  } else {
+    response.end('Incorrect email!!!');
+  }
 });
 
 // Handle Logout:
 app.post('/logout', function(request,response){
   // delete cookie
-  response.clearCookie('username');
+  response.clearCookie('email');
   response.redirect('/');
+});
+
+// Registration page:
+app.get('/register', function(request, response){
+  response.render('register.ejs');
+});
+
+// Handle response from registration:
+app.post('/register', function(request, response){
+  var newUserID = `user${Object.keys(userDatabase).length+1}`;
+  userDatabase[newUserID] = {email: request.body.email, password: request.body.password};
+  console.log(userDatabase);
+  let templateVariables = {email: request.cookies.email};
+  response.render('home_page.ejs', templateVariables);
 });
 
 
