@@ -107,21 +107,7 @@ app.post('/urls/new', (req, res) => {
   res.redirect('/urls');
 });
 
-// Handle the UPDATE URL rquest from the Single URL page
-app.put('/urls/:shortURL', function(req, res){
-  let urlToUpdate = req.params.shortURL;
-  let newLongUrl = req.body.longURL;
-  userDatabase[req.session.userID].urlDatabase[urlToUpdate] = newLongUrl;
-  res.redirect('/urls');
-});
 
-// Handle the DELETE URL req:
-app.delete('/urls/:id/delete', function(req, res){
-  let userInfo = userDatabase[req.session.userID];
-  let shortUrlToDelete = req.params.id;
-  delete userDatabase[req.session.userID].urlDatabase[shortUrlToDelete];
-  res.redirect('/urls');
-});
 
 // Handle LOGIN:
 app.post('/login', function(req, res){
@@ -164,6 +150,31 @@ app.post('/register', function(req, res){
   req.session.userID = newUserID;
   res.redirect('/urls');
 });
+
+
+
+//-------------PUT HANDLERS----------------------------------------------------------------------------------
+
+// Handle the UPDATE URL rquest from the Single URL page
+app.put('/urls/:shortURL', function(req, res){
+  let urlToUpdate = req.params.shortURL;
+  let newLongUrl = req.body.longURL;
+  userDatabase[req.session.userID].urlDatabase[urlToUpdate] = newLongUrl;
+  res.redirect('/urls');
+});
+
+
+
+//-------------DELETE HANDLERS--------------------------------------------------------------------------------
+
+// DELETE URL:
+app.delete('/urls/:id/delete', function(req, res){
+  let userInfo = userDatabase[req.session.userID];
+  let shortUrlToDelete = req.params.id;
+  delete userDatabase[req.session.userID].urlDatabase[shortUrlToDelete];
+  res.redirect('/urls');
+});
+
 
 
 // Fire up the server!
