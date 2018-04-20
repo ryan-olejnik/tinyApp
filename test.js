@@ -1,38 +1,10 @@
-var defaultUrlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-
-const checkUserLogin = require('./checkUserLogin.js');
+const bcrypt = require('bcrypt');
+const password = "purple"; // you will probably this from req.params
+var hashedPassword = bcrypt.hashSync(password, 1);
+var hashedPassword2 = bcrypt.hashSync(password, 1);
 
 
 
-const userDatabase = { 
-  "user234324": {
-    userID: "user234324",
-    email: "ryan@example.com", 
-    password: "pass",
-    urlDatabase: defaultUrlDatabase
+console.log(bcrypt.compareSync('purple', hashedPassword));
+console.log(bcrypt.compareSync('purple', hashedPassword2));
 
-  },
- "user2323432": {
-    userID: "user2323432",
-    email: "user2@example.com", 
-    password: "dishwasher-funk",
-    urlDatabase: defaultUrlDatabase
-  }
-};
-
-var userID = checkUserLogin('ryan@example.com', 'pass', userDatabase);
-console.log(userDatabase[userID]);
-
-/*
-   { email: 'myemail',
-     password: 'pass',
-     urlDatabase: 
-      { b2xVn2: 'http://www.lighthouselabs.ca',
-        '9sm5xK': 'http://www.google.com' },
-     userID: 'user1367563' }
-
-*/

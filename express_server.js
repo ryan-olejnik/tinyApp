@@ -4,6 +4,7 @@ const bodyParser = require("body-parser"); // Allows us to handle 'POST' reqs
 const cookieParser = require('cookie-parser');
 var generateRandomString = require('./generateRandomString.js');
 const checkUserLogin = require('./checkUserLogin.js');
+const findLongUrl = require('./findLongUrl.js');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -15,19 +16,27 @@ var defaultUrlDatabase = {
 };
 
 var userDatabase = {};
-// userDatabase format: user13434: {email: ryan@gmail.com, password: pass123, urlDatabase: {}}
 
 //-----------GET HANDLERS--------------------------------------------------------------------------------------
 
 // Homepage
 app.get("/", (req, res) => {
-  res.render('home_page.ejs');
+  let userInfo = userDatabase[req.cookies.userID];
+  if (userInfo) {
+    res.redirect('/urls');
+  } else{
+    res.render('home_page.ejs');
+  }
 });
 
 // List all urls in user's database 
 app.get('/urls', function(req, res){
   let userInfo = userDatabase[req.cookies.userID];
-  res.render('urls_index', userInfo);
+  if (userInfo){
+    res.render('urls_index', userInfo);
+  } else{
+    res.redirect('/login');
+  }
 });
 
 // New url page
@@ -51,6 +60,7 @@ app.get('/urls/:shortURL', function(req, res){
   }
 });
 
+// Login Page
 app.get('/login', function(req, res){
   let userInfo = userDatabase[req.cookies.userID];
   res.render('login.ejs', userInfo);
@@ -60,14 +70,14 @@ app.get('/login', function(req, res){
 // Redirect to longURL original website
 app.get('/u/:shortURL', function(req, res){
   let userInfo = userDatabase[req.cookies.userID];
-  let longURL = userInfo.urlDatabase[req.params.shortURL];
+  let longUrl = findLongUrl(req.params.shortURL, userDatabase);
   // check if shortURL is in database:
-  if (userInfo.urlDatabase[req.params.shortURL]){
+  if (longUrl){
     // Add 'https://' to the longURL if it was omitted by the user:
-    if (longURL.slice(0,4) == 'http'){
-    res.redirect(longURL);
+    if (longUrl.slice(0,4) == 'http'){
+    res.redirect(longUrl);
     } else {
-    res.redirect('https://' + longURL);
+    res.redirect('https://' + longUrl);
     }
   } else{
     res.end('WRONG SHORTENED URL!!!');
@@ -104,10 +114,17 @@ app.post('/urls/:id/delete', function(req, res){
 
 // Handle Login:
 app.post('/login', function(req, res){
-  // DETERMINE IF THE LOGIN/PASSWORD MATCH ANYTHING IN THE DATABASE: 
-  if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
+  // If there is alreay a cookie for the username:
+  if (userDatabase[req.cookies.userID]){
+    console.log('We have your Cookie!!')
+    res.redirect('/urls');
+    res.end();
+  }
+
+  // If they have entered data into the form
+  else if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
     res.cookie('userID', checkUserLogin(req.body.email, req.body.password, userDatabase));
-    console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
+    // console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
     res.redirect('/urls');
   } else{
     res.status(403);
@@ -136,10 +153,9 @@ app.post('/register', function(req, res){
 
   userDatabase[newUserID] = {email: req.body.email, password: req.body.password,
   urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
-  let isLoggedIn = checkUserLogin(req.cookies.email, req.cookies.password, userDatabase).isValid;
-  let templateVariables = {email: req.cookies.email, isLoggedIn: isLoggedIn};
-  console.log('new user added to userDatabase:', userDatabase);
-  res.render('home_page.ejs', templateVariables);
+  res.cookie('userID', newUserID);
+  
+  res.redirect('/urls');
 });
 
 
