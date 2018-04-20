@@ -4,10 +4,9 @@
   <title>TinyApp</title>
 </head>
 <body>
-    <%- include('partials/_header.ejs') %>
-    <p>Shortened URL: <%= shortURL %></p>
-    <form method='POST' action = '/urls/<%= shortURL %>'>
-      <input type='text' name='longURL' value='<%= longURL%>'>
+    <p>Shortened URL: <%= shortUrl %></p>
+    <form method='POST' action = '/urls/<%= shortUrl %>'>
+      <input type='text' name='longURL' value='<%= longUrl%>'>
       <input type='submit' value='Update!'>
     </form>
 </body>

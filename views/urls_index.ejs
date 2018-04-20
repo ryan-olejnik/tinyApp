@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>TinyApp</title>
-</head>
-<body>
+  <head>
+    <title>TinyApp</title>
+  </head>
+  <body>
     <%- include('partials/_header.ejs') %>
     <h2>List of all the urls in url Database</h2>
     <% for (let shortURL in urlDatabase){ %>
     <h3>For the Website: <%=urlDatabase[shortURL]%></h3>
-    <p>We can use the shortened url: <%=shortURL %></p>
+    <p>We can use the shortened url: <a href='/urls/<%=shortURL %>'><%=shortURL %></a></p>
     <form method="POST" action="/urls/<%= shortURL %>/delete">
       <input type="submit" value="DELETE THIS ITEM">
-    </form>
-
-    <form method='GET' action='/urls/<%= shortURL %>'>
-      <input type='submit' value='edit'>
     </form>
 
     <form method='GET' action='/u/<%=shortURL %>' >
@@ -29,5 +25,7 @@
     </form>
 
 
-</body>
+  </body>
 </html>
+
+

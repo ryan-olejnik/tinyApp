@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 var generateRandomString = require('./generateRandomString.js');
 const checkUserLogin = require('./checkUserLogin.js');
 const findLongUrl = require('./findLongUrl.js');
+const bcrypt = require('bcrypt');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -51,10 +52,12 @@ app.get('/register', function(req, res){
 });
 
 // Single URL page (with option to update longURL)
-app.get('/urls/:shortURL', function(req, res){
+app.get('/urls/:shortUrl', function(req, res){
   let userInfo = userDatabase[req.cookies.userID];
+  let templateVars = {shortUrl: req.params.shortUrl, longUrl: userDatabase[req.cookies.userID].urlDatabase[req.params.shortUrl]};
 
-  if (userInfo.urlDatabase[req.params.shortURL]){
+  if (userInfo.urlDatabase[req.params.shortUrl]){
+    res.render('urls_show.ejs', templateVars);
   } else {
     res.end('WRONG SHORTENED URL!!!!');
   }
@@ -100,7 +103,7 @@ app.post('/urls/new', (req, res) => {
 app.post('/urls/:shortURL', function(req, res){
   let urlToUpdate = req.params.shortURL;
   let newLongUrl = req.body.longURL;
-  urlDatabase[urlToUpdate] = newLongUrl;
+  userDatabase[req.cookies.userID].urlDatabase[urlToUpdate] = newLongUrl;
   res.redirect('/urls');
 });
 
@@ -116,12 +119,11 @@ app.post('/urls/:id/delete', function(req, res){
 app.post('/login', function(req, res){
   // If there is alreay a cookie for the username:
   if (userDatabase[req.cookies.userID]){
-    console.log('We have your Cookie!!')
     res.redirect('/urls');
     res.end();
   }
 
-  // If they have entered data into the form
+  // If they have entered data into the login form
   else if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
     res.cookie('userID', checkUserLogin(req.body.email, req.body.password, userDatabase));
     // console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
@@ -151,9 +153,11 @@ app.post('/register', function(req, res){
     res.end();
   }
 
-  userDatabase[newUserID] = {email: req.body.email, password: req.body.password,
-  urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
+  userDatabase[newUserID] = {email: req.body.email, password: bcrypt.hashSync(req.body.password, 10),
+    urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
   res.cookie('userID', newUserID);
+
+  console.log('User Database= \n', userDatabase);
   
   res.redirect('/urls');
 });
