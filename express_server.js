@@ -25,7 +25,7 @@ var userDatabase = {};
 
 //-----------GET HANDLERS--------------------------------------------------------------------------------------
 
-// Homepage
+// HOMEPAGE
 app.get("/", (req, res) => {
   let userInfo = userDatabase[req.session.userID];
   if (userInfo) {
@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
   }
 });
 
-// List all urls in user's database 
+// LIST ALL URLs in user's database 
 app.get('/urls', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   if (userInfo){
@@ -45,18 +45,18 @@ app.get('/urls', function(req, res){
   }
 });
 
-// New url page
+// NEW URL page
 app.get('/urls/new', function (req, res){
   let userInfo = userDatabase[req.session.userID];
   res.render('urls_new.ejs', userInfo);
 });
 
-// Registration page:
+// REGISTRATION page:
 app.get('/register', function(req, res){
   res.render('register.ejs');
 });
 
-// Single URL page (with option to update longURL)
+// EDIT URL
 app.get('/urls/:shortUrl', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   let templateVars = {shortUrl: req.params.shortUrl, longUrl: userDatabase[req.session.userID].urlDatabase[req.params.shortUrl]};
@@ -64,18 +64,18 @@ app.get('/urls/:shortUrl', function(req, res){
   if (userInfo.urlDatabase[req.params.shortUrl]){
     res.render('urls_show.ejs', templateVars);
   } else {
-    res.end('WRONG SHORTENED URL!!!!');
+    res.end('WRONG SHORT URL!!!!');
   }
 });
 
-// Login Page
+// LOGIN Page
 app.get('/login', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   res.render('login.ejs', userInfo);
 });
 
 
-// Redirect to longURL original website
+// REDIRECT to longURL original website
 app.get('/u/:shortURL', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   let longUrl = findLongUrl(req.params.shortURL, userDatabase);
@@ -96,7 +96,7 @@ app.get('/u/:shortURL', function(req, res){
 
 // ----------POST HANDLERS---------------------------------------------------------------------------------------
 
-// POST from new url page:
+// Create a NEW SHORT URL
 app.post('/urls/new', (req, res) => {
   let userInfo = userDatabase[req.session.userID];
   let newShortUrl = generateRandomString();
@@ -104,7 +104,7 @@ app.post('/urls/new', (req, res) => {
   res.redirect('/urls');
 });
 
-// Handle the 'UPDATE URL' rquest from the Single URL page
+// Handle the UPDATE URL rquest from the Single URL page
 app.post('/urls/:shortURL', function(req, res){
   let urlToUpdate = req.params.shortURL;
   let newLongUrl = req.body.longURL;
@@ -112,7 +112,7 @@ app.post('/urls/:shortURL', function(req, res){
   res.redirect('/urls');
 });
 
-// Handle the 'DELETE URL' req:
+// Handle the DELETE URL req:
 app.post('/urls/:id/delete', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   let shortUrlToDelete = req.params.id;
@@ -120,11 +120,10 @@ app.post('/urls/:id/delete', function(req, res){
   res.redirect('/urls');
 });
 
-// Handle Login:
+// Handle LOGIN:
 app.post('/login', function(req, res){
   // If there is alreay a cookie for the username:
   if (userDatabase[req.session.userID]){
-    console.log('there is already a cooke: userID', req.session.userID);
     res.redirect('/urls');
     res.end();
   }
@@ -132,7 +131,6 @@ app.post('/login', function(req, res){
   // If they have entered data into the login form
   else if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
     req.session.userID = checkUserLogin(req.body.email, req.body.password, userDatabase);
-    // console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
     res.redirect('/urls');
   } else{
     res.status(403);
@@ -140,13 +138,13 @@ app.post('/login', function(req, res){
   }
 });
 
-// Handle Logout:
+// Handle LOGOUT:
 app.post('/logout', function(req,res){
   req.session = null;
   res.redirect('/');
 });
 
-// Handle POST from registration:
+// REGISTRATION:
 app.post('/register', function(req, res){
   var newUserID = `user${Object.keys(userDatabase).length+1}${generateRandomString()}`;
 
@@ -160,10 +158,7 @@ app.post('/register', function(req, res){
 
   userDatabase[newUserID] = {email: req.body.email, password: bcrypt.hashSync(req.body.password, 10),
     urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
-  // console.log('User Database= \n', userDatabase);
   req.session.userID = newUserID;
-
-  
   res.redirect('/urls');
 });
 
