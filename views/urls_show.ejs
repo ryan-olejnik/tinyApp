@@ -5,7 +5,7 @@
 </head>
 <body>
     <p>Shortened URL: <%= shortUrl %></p>
-    <form method='POST' action = '/urls/<%= shortUrl %>'>
+    <form method='POST' action = '/urls/<%= shortUrl %>?_method=PUT'>
       <input type='text' name='longURL' value='<%= longUrl%>'>
       <input type='submit' value='Update!'>
     </form>

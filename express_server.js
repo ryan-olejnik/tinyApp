@@ -6,6 +6,8 @@ var generateRandomString = require('./generateRandomString.js');
 const checkUserLogin = require('./checkUserLogin.js');
 const findLongUrl = require('./findLongUrl.js');
 const bcrypt = require('bcrypt');
+const methodOverride = require('method-override');
+
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
@@ -14,6 +16,7 @@ app.use(cookieSession({
   maxAge: 24*60*60*1000, // 24 hours
   unset: 'destroy'
 }));
+app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
 var defaultUrlDatabase = {
@@ -105,7 +108,7 @@ app.post('/urls/new', (req, res) => {
 });
 
 // Handle the UPDATE URL rquest from the Single URL page
-app.post('/urls/:shortURL', function(req, res){
+app.put('/urls/:shortURL', function(req, res){
   let urlToUpdate = req.params.shortURL;
   let newLongUrl = req.body.longURL;
   userDatabase[req.session.userID].urlDatabase[urlToUpdate] = newLongUrl;
@@ -113,7 +116,7 @@ app.post('/urls/:shortURL', function(req, res){
 });
 
 // Handle the DELETE URL req:
-app.post('/urls/:id/delete', function(req, res){
+app.delete('/urls/:id/delete', function(req, res){
   let userInfo = userDatabase[req.session.userID];
   let shortUrlToDelete = req.params.id;
   delete userDatabase[req.session.userID].urlDatabase[shortUrlToDelete];
