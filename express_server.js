@@ -1,14 +1,19 @@
 const app = require('express')();
 var PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser"); // Allows us to handle 'POST' reqs
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 var generateRandomString = require('./generateRandomString.js');
 const checkUserLogin = require('./checkUserLogin.js');
 const findLongUrl = require('./findLongUrl.js');
 const bcrypt = require('bcrypt');
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'sesion',
+  keys: ['nickelback'],
+  maxAge: 24*60*60*1000, // 24 hours
+  unset: 'destroy'
+}));
 app.set('view engine', 'ejs');
 
 var defaultUrlDatabase = {
@@ -22,7 +27,7 @@ var userDatabase = {};
 
 // Homepage
 app.get("/", (req, res) => {
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   if (userInfo) {
     res.redirect('/urls');
   } else{
@@ -32,7 +37,7 @@ app.get("/", (req, res) => {
 
 // List all urls in user's database 
 app.get('/urls', function(req, res){
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   if (userInfo){
     res.render('urls_index', userInfo);
   } else{
@@ -42,7 +47,7 @@ app.get('/urls', function(req, res){
 
 // New url page
 app.get('/urls/new', function (req, res){
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   res.render('urls_new.ejs', userInfo);
 });
 
@@ -53,8 +58,8 @@ app.get('/register', function(req, res){
 
 // Single URL page (with option to update longURL)
 app.get('/urls/:shortUrl', function(req, res){
-  let userInfo = userDatabase[req.cookies.userID];
-  let templateVars = {shortUrl: req.params.shortUrl, longUrl: userDatabase[req.cookies.userID].urlDatabase[req.params.shortUrl]};
+  let userInfo = userDatabase[req.session.userID];
+  let templateVars = {shortUrl: req.params.shortUrl, longUrl: userDatabase[req.session.userID].urlDatabase[req.params.shortUrl]};
 
   if (userInfo.urlDatabase[req.params.shortUrl]){
     res.render('urls_show.ejs', templateVars);
@@ -65,14 +70,14 @@ app.get('/urls/:shortUrl', function(req, res){
 
 // Login Page
 app.get('/login', function(req, res){
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   res.render('login.ejs', userInfo);
 });
 
 
 // Redirect to longURL original website
 app.get('/u/:shortURL', function(req, res){
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   let longUrl = findLongUrl(req.params.shortURL, userDatabase);
   // check if shortURL is in database:
   if (longUrl){
@@ -93,7 +98,7 @@ app.get('/u/:shortURL', function(req, res){
 
 // POST from new url page:
 app.post('/urls/new', (req, res) => {
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   let newShortUrl = generateRandomString();
   userInfo.urlDatabase[newShortUrl] = req.body.longURL;
   res.redirect('/urls');
@@ -103,29 +108,30 @@ app.post('/urls/new', (req, res) => {
 app.post('/urls/:shortURL', function(req, res){
   let urlToUpdate = req.params.shortURL;
   let newLongUrl = req.body.longURL;
-  userDatabase[req.cookies.userID].urlDatabase[urlToUpdate] = newLongUrl;
+  userDatabase[req.session.userID].urlDatabase[urlToUpdate] = newLongUrl;
   res.redirect('/urls');
 });
 
 // Handle the 'DELETE URL' req:
 app.post('/urls/:id/delete', function(req, res){
-  let userInfo = userDatabase[req.cookies.userID];
+  let userInfo = userDatabase[req.session.userID];
   let shortUrlToDelete = req.params.id;
-  delete userDatabase[req.cookies.userID].urlDatabase[shortUrlToDelete];
+  delete userDatabase[req.session.userID].urlDatabase[shortUrlToDelete];
   res.redirect('/urls');
 });
 
 // Handle Login:
 app.post('/login', function(req, res){
   // If there is alreay a cookie for the username:
-  if (userDatabase[req.cookies.userID]){
+  if (userDatabase[req.session.userID]){
+    console.log('there is already a cooke: userID', req.session.userID);
     res.redirect('/urls');
     res.end();
   }
 
   // If they have entered data into the login form
   else if (checkUserLogin(req.body.email, req.body.password, userDatabase)){
-    res.cookie('userID', checkUserLogin(req.body.email, req.body.password, userDatabase));
+    req.session.userID = checkUserLogin(req.body.email, req.body.password, userDatabase);
     // console.log('the following user just logged in:', userDatabase[checkUserLogin(req.body.email, req.body.password, userDatabase)]);
     res.redirect('/urls');
   } else{
@@ -136,8 +142,7 @@ app.post('/login', function(req, res){
 
 // Handle Logout:
 app.post('/logout', function(req,res){
-  // delete cookie
-  res.clearCookie('userID');
+  req.session = null;
   res.redirect('/');
 });
 
@@ -155,9 +160,9 @@ app.post('/register', function(req, res){
 
   userDatabase[newUserID] = {email: req.body.email, password: bcrypt.hashSync(req.body.password, 10),
     urlDatabase: { "b2xVn2": "http://www.lighthouselabs.ca", "9sm5xK": "http://www.google.com"}, userID: newUserID};
-  res.cookie('userID', newUserID);
+  // console.log('User Database= \n', userDatabase);
+  req.session.userID = newUserID;
 
-  console.log('User Database= \n', userDatabase);
   
   res.redirect('/urls');
 });
